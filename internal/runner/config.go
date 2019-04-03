@@ -1,4 +1,4 @@
-package main
+package runner
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/manifoldco/promptui"
+	"github.com/jsteenb2/promptui"
 )
 
 type CFG struct {
@@ -39,7 +39,7 @@ func (c CFG) DBConnection() string {
 	return strings.Join(parts, " ")
 }
 
-func newDBCFG() (string, error) {
+func NewDBCFG() (string, error) {
 	cfg, err := func() (CFG, error) {
 		cfgs, err := configFile()
 		if err == nil {
@@ -133,6 +133,10 @@ func newDBCFG() (string, error) {
 	return newCFG.DBConnection(), nil
 }
 
+func LoadConfigs() ([]CFG, error) {
+	return configFile()
+}
+
 func configFile() ([]CFG, error) {
 	konsdir := os.Getenv("HOME") + "/.pgkons"
 	_, err := os.Lstat(konsdir)
@@ -160,9 +164,7 @@ func configFile() ([]CFG, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		check(file.Close())
-	}()
+	defer file.Close()
 
 	var cfgs []CFG
 	if err := json.NewDecoder(file).Decode(&cfgs); err != nil {
@@ -197,7 +199,7 @@ func saveNewConfig(newCFG CFG) error {
 	if err := json.NewDecoder(file).Decode(&cfgs); err != nil {
 		fmt.Println(err)
 	}
-	check(file.Close())
+	file.Close()
 
 	newF, err := os.Create(configFilePath)
 	if err != nil {
@@ -237,7 +239,7 @@ func selectConfig(cfgs []CFG) (CFG, error) {
 	templates := &promptui.SelectTemplates{
 		Label:    "{{ . }}?",
 		Active:   "» {{ .Name | cyan }} : {{ .Username | green }}  : {{ .DBName | green }} : {{ .SSLMode | green }}",
-		Inactive: "  {{ .Name | cyan }} : {{ .Username | green }}  : {{ .DBName | green }} : {{ .SSLMode | green }}",
+		Inactive: "   {{ .Name | cyan }} : {{ .Username | green }}  : {{ .DBName | green }} : {{ .SSLMode | green }}",
 		Selected: "{{ print .Name }}",
 		Details: `
  ------------ Config ------------

@@ -1,10 +1,10 @@
-package main
+package runner
 
 import (
 	"context"
 	"strings"
 
-	"github.com/manifoldco/promptui"
+	"github.com/jsteenb2/promptui"
 )
 
 type StateFn func(context.Context, *Runner) (StateFn, error)
